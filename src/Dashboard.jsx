@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import LeadsChart from './LeadsChart'
 
 function Dashboard({ session }) {
   const [companyName, setCompanyName] = useState('')
-  const [rowCount, setRowCount] = useState(null)
+  const [campaigns, setCampaigns] = useState([])
+  const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
@@ -16,20 +18,23 @@ function Dashboard({ session }) {
 
       if (profileError) {
         setErrorMessage(profileError.message)
+        setLoading(false)
         return
       }
       setCompanyName(profile ? profile.company_name : 'No company assigned')
 
-      // No company filter here: the database decides which rows we get
+      // No company filter here: RLS decides which rows we receive
       const { data: rows, error: rowsError } = await supabase
         .from('campaign_data')
-        .select('*')
+        .select('id, company_name, channel, leads')
+        .order('leads', { ascending: false })
 
       if (rowsError) {
         setErrorMessage(rowsError.message)
-        return
+      } else {
+        setCampaigns(rows)
       }
-      setRowCount(rows.length)
+      setLoading(false)
     }
 
     loadData()
@@ -41,6 +46,8 @@ function Dashboard({ session }) {
       setErrorMessage(error.message)
     }
   }
+
+  const totalLeads = campaigns.reduce((sum, row) => sum + row.leads, 0)
 
   return (
     <main>
@@ -54,8 +61,47 @@ function Dashboard({ session }) {
 
       {errorMessage && <p className="error">{errorMessage}</p>}
 
-      {rowCount !== null && (
-        <p>The database returned <strong>{rowCount}</strong> campaign rows.</p>
+      {loading && <p>Loading campaigns...</p>}
+
+      {!loading && !errorMessage && campaigns.length === 0 && (
+        <p>No campaign data is available for your account.</p>
+      )}
+
+      {!loading && campaigns.length > 0 && (
+        <>
+          <section className="panel">
+            <h2>Campaigns</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Channel</th>
+                  <th className="number">Leads</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.company_name}</td>
+                    <td>{row.channel}</td>
+                    <td className="number">{row.leads}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan="2">Total</td>
+                  <td className="number">{totalLeads}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </section>
+
+          <section className="panel">
+            <h2>Leads by channel</h2>
+            <LeadsChart campaigns={campaigns} />
+          </section>
+        </>
       )}
     </main>
   )

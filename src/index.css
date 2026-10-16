@@ -1,3 +1,18 @@
+/* ===== Base page (Phase 6) ===== */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f5f6f8;
+  color: #222;
+}
+
+main {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+/* ===== Login and buttons (Phase 7) ===== */
 .card {
   background: white;
   max-width: 360px;
@@ -53,4 +68,44 @@ button:disabled {
 .topbar p {
   margin: 0;
   color: #666;
+}
+
+/* ===== Table and chart panels (Phase 8) ===== */
+.panel {
+  background: white;
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  color: #666;
+  font-weight: 600;
+}
+
+tfoot td {
+  font-weight: 700;
+  border-bottom: none;
+}
+
+.number {
+  text-align: right;
 }
