@@ -1,29 +1,33 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import Login from './Login'
+import Dashboard from './Dashboard'
 
 function App() {
-  const [message, setMessage] = useState('Checking connection...')
+  const [session, setSession] = useState(null)
+  const [checkingSession, setCheckingSession] = useState(true)
 
   useEffect(() => {
-    async function testConnection() {
-      const { data, error } = await supabase.from('campaign_data').select('*')
+    // 1. On page load: is someone already logged in?
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setCheckingSession(false)
+    })
 
-      if (error) {
-        setMessage('Supabase replied: ' + error.message)
-      } else {
-        setMessage('Supabase returned ' + data.length + ' rows')
-      }
-    }
+    // 2. Listen for future logins and logouts
+    const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession)
+    })
 
-    testConnection()
+    // 3. Stop listening if App is ever removed from the page
+    return () => data.subscription.unsubscribe()
   }, [])
 
-  return (
-    <main>
-      <h1>Marketing Dashboard</h1>
-      <p>{message}</p>
-    </main>
-  )
+  if (checkingSession) {
+    return <main><p>Loading...</p></main>
+  }
+
+  return session ? <Dashboard session={session} /> : <Login />
 }
 
 export default App
